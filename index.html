@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roteirização</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <aside id="painel">
+    <header>
+      <h1>Roteirização</h1>
+      <p class="sub">Planeje e otimize rotas de entrega</p>
+    </header>
+
+    <section>
+      <form id="form-busca" autocomplete="off">
+        <label for="busca">Adicionar endereço</label>
+        <div class="linha">
+          <input id="busca" type="text" placeholder="Rua, número, cidade…" required />
+          <button type="submit">Buscar</button>
+        </div>
+        <ul id="sugestoes" hidden></ul>
+      </form>
+      <p class="dica">Ou clique no mapa para adicionar um ponto. O primeiro ponto é a origem (depósito).</p>
+    </section>
+
+    <section>
+      <div class="titulo-lista">
+        <h2>Paradas <span id="contador">(0)</span></h2>
+        <button id="btn-limpar" class="link" type="button">Limpar tudo</button>
+      </div>
+      <ol id="lista-paradas"></ol>
+      <p id="vazio" class="dica">Nenhuma parada adicionada.</p>
+    </section>
+
+    <section class="opcoes">
+      <label><input id="ida-volta" type="checkbox" checked /> Retornar à origem</label>
+      <label>Critério
+        <select id="criterio">
+          <option value="duration">Menor tempo</option>
+          <option value="distance">Menor distância</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="acoes">
+      <button id="btn-otimizar" class="primario" type="button">Otimizar rota</button>
+      <button id="btn-gmaps" type="button" disabled>Abrir no Google Maps</button>
+      <button id="btn-exportar" type="button" disabled>Exportar CSV</button>
+      <label class="botao">Importar CSV<input id="arquivo-csv" type="file" accept=".csv,.txt" hidden /></label>
+    </section>
+
+    <section id="resumo" hidden>
+      <h2>Resumo</h2>
+      <dl>
+        <dt>Distância total</dt><dd id="res-distancia">–</dd>
+        <dt>Tempo estimado</dt><dd id="res-tempo">–</dd>
+      </dl>
+      <p id="res-economia" class="dica"></p>
+    </section>
+
+    <p id="status" role="status"></p>
+  </aside>
+
+  <main id="mapa"></main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f4f6f8;
+  --texto: #1d2733;
+  --texto-suave: #5b6b7c;
+  --borda: #d8dee5;
+  --primaria: #1f6feb;
+  --primaria-texto: #ffffff;
+  --perigo: #c62828;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161b22;
+    --bg-alt: #0d1117;
+    --texto: #e6edf3;
+    --texto-suave: #9aa7b4;
+    --borda: #30363d;
+    --primaria: #388bfd;
+    --perigo: #f47067;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--bg-alt);
+}
+
+body { display: flex; }
+
+#painel {
+  width: 380px;
+  max-width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  border-right: 1px solid var(--borda);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#mapa { flex: 1; height: 100%; }
+
+h1 { margin: 0; font-size: 1.4rem; }
+h2 { margin: 0; font-size: 1rem; }
+.sub { margin: 4px 0 0; color: var(--texto-suave); }
+.dica { color: var(--texto-suave); font-size: 0.85rem; margin: 8px 0 0; }
+
+label { font-size: 0.9rem; }
+.linha { display: flex; gap: 8px; margin-top: 6px; }
+
+input[type="text"], select {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--texto);
+  font: inherit;
+}
+
+button, .botao {
+  padding: 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: center;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primario { background: var(--primaria); border-color: var(--primaria); color: var(--primaria-texto); }
+button.link { border: none; background: none; color: var(--primaria); padding: 0; }
+
+#sugestoes {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+}
+#sugestoes li { padding: 8px 10px; cursor: pointer; font-size: 0.85rem; }
+#sugestoes li + li { border-top: 1px solid var(--borda); }
+#sugestoes li:hover { background: var(--bg-alt); }
+
+.titulo-lista { display: flex; justify-content: space-between; align-items: center; }
+
+#lista-paradas { margin: 8px 0 0; padding: 0; list-style: none; }
+#lista-paradas li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.85rem;
+}
+#lista-paradas .num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--primaria);
+  color: var(--primaria-texto);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+#lista-paradas li.origem .num { background: #2e7d32; }
+#lista-paradas .nome { flex: 1; overflow-wrap: anywhere; }
+#lista-paradas .ctrl { display: flex; gap: 2px; }
+#lista-paradas .ctrl button { padding: 2px 6px; font-size: 0.8rem; }
+#lista-paradas .ctrl button.remover { color: var(--perigo); }
+
+.opcoes { display: flex; flex-direction: column; gap: 8px; }
+.opcoes label { display: flex; align-items: center; gap: 8px; }
+
+.acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acoes .primario { grid-column: 1 / -1; padding: 10px; font-weight: 600; }
+
+#resumo dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0 0; }
+#resumo dt { color: var(--texto-suave); }
+#resumo dd { margin: 0; font-weight: 600; }
+
+#status { min-height: 1.2em; font-size: 0.85rem; color: var(--texto-suave); margin: 0; }
+#status.erro { color: var(--perigo); }
+
+.marcador {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primaria);
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  font: 600 12px system-ui, sans-serif;
+}
+.marcador.origem { background: #2e7d32; }
+
+@media (max-width: 760px) {
+  body { flex-direction: column-reverse; }
+  #painel { width: 100%; height: 55%; border-right: none; border-top: 1px solid var(--borda); }
+  #mapa { height: 45%; flex: none; }
+}
