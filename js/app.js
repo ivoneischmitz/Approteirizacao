@@ -5,6 +5,8 @@ const NOMINATIM_REVERSE = "https://nominatim.openstreetmap.org/reverse";
 const OSRM = "https://router.project-osrm.org";
 const VELOCIDADE_MEDIA_KMH = 40; // usada quando o OSRM não está disponível
 const STORAGE_KEY = "roteirizacao:paradas";
+const CACHE_KEY = "roteirizacao:geocache";
+const PAIS = "br"; // prioriza resultados no Brasil
 
 const $ = (id) => document.getElementById(id);
 
@@ -40,6 +42,22 @@ function salvar() {
   }
 }
 
+let cacheGeo = {};
+try {
+  cacheGeo = JSON.parse(localStorage.getItem(CACHE_KEY)) || {};
+} catch {
+  cacheGeo = {};
+}
+
+function guardarNoCache(texto, { lat, lng }) {
+  cacheGeo[texto] = { lat, lng };
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheGeo));
+  } catch {
+    /* sem armazenamento: cache só nesta sessão */
+  }
+}
+
 // ---------- Status ----------
 
 function status(msg, erro = false) {
@@ -50,10 +68,17 @@ function status(msg, erro = false) {
 // ---------- Geocodificação ----------
 
 async function geocodificar(texto, limite = 5) {
-  const url = `${NOMINATIM}?${new URLSearchParams({ q: texto, format: "json", limit: limite, "accept-language": "pt-BR" })}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Falha na busca (${resp.status})`);
-  const dados = await resp.json();
+  const buscar = async (extra) => {
+    const url = `${NOMINATIM}?${new URLSearchParams({ q: texto, format: "json", limit: limite, "accept-language": "pt-BR", ...extra })}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Falha na busca (${resp.status})`);
+    return resp.json();
+  };
+  let dados = await buscar({ countrycodes: PAIS });
+  if (!dados.length) {
+    await new Promise((ok) => setTimeout(ok, 1100)); // política de uso do Nominatim: 1 req/s
+    dados = await buscar({});
+  }
   return dados.map((d) => ({ nome: d.display_name, lat: Number(d.lat), lng: Number(d.lon) }));
 }
 
@@ -182,45 +207,99 @@ function exportarCSV() {
   URL.revokeObjectURL(a.href);
 }
 
-// Aceita, por linha: "nome;lat;lng", "lat,lng" ou um endereço livre.
-async function importarCSV(arquivo) {
-  const texto = await arquivo.text();
-  const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  let ok = 0;
-  let falhas = 0;
+// Converte uma linha em parada. Aceita "nome;lat;lng", "lat,lng" ou um endereço livre.
+// Retorna { parada } ou { geocodificar: texto } quando precisa buscar o endereço.
+function interpretarLinha(linha) {
+  const campos = linha.split(/[;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+  const nums = campos.map(Number);
+  if (campos.length >= 3 && Number.isFinite(nums[campos.length - 2]) && Number.isFinite(nums[campos.length - 1])) {
+    return { parada: { nome: campos.slice(0, -2).join(" ") || linha, lat: nums[campos.length - 2], lng: nums[campos.length - 1] } };
+  }
+  const m = linha.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (m) return { parada: { nome: linha, lat: Number(m[1]), lng: Number(m[2]) } };
+  return { geocodificar: campos.filter(Boolean).join(", ") };
+}
+
+// Busca as coordenadas de cada linha, respeitando o limite de 1 requisição/s do Nominatim.
+async function importarLinhas(linhas) {
+  const paradas = [];
+  const falhas = [];
+  let ultimaBusca = 0;
   for (const [n, linha] of linhas.entries()) {
-    const campos = linha.split(/[;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
-    const nums = campos.map(Number);
-    let parada = null;
-    if (campos.length >= 3 && Number.isFinite(nums[campos.length - 2]) && Number.isFinite(nums[campos.length - 1])) {
-      parada = { nome: campos.slice(0, -2).join(" ") || linha, lat: nums[campos.length - 2], lng: nums[campos.length - 1] };
-    } else {
-      const m = linha.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-      if (m) {
-        parada = { nome: linha, lat: Number(m[1]), lng: Number(m[2]) };
-      } else if (/^(ordem|nome|endere)/i.test(linha)) {
-        continue; // cabeçalho
+    if (n === 0 && /^(ordem|nome|endere)/i.test(linha) && !/\d/.test(linha)) continue; // cabeçalho
+    const r = interpretarLinha(linha);
+    let parada = r.parada;
+    if (!parada) {
+      status(`Buscando endereço ${n + 1} de ${linhas.length}: ${linha}`);
+      const cache = cacheGeo[r.geocodificar];
+      if (cache) {
+        parada = { ...cache, nome: linha };
       } else {
-        status(`Geocodificando ${n + 1}/${linhas.length}: ${linha}`);
+        const espera = ultimaBusca + 1100 - Date.now();
+        if (espera > 0) await new Promise((ok) => setTimeout(ok, espera));
         try {
-          [parada] = await geocodificar(campos.join(", "), 1);
+          const [achado] = await geocodificar(r.geocodificar, 1);
+          if (achado) {
+            parada = { nome: linha, lat: achado.lat, lng: achado.lng };
+            guardarNoCache(r.geocodificar, parada);
+          }
         } catch {
           parada = null;
         }
-        await new Promise((r) => setTimeout(r, 1100)); // política de uso do Nominatim: 1 req/s
+        ultimaBusca = Date.now();
       }
     }
-    if (parada && Math.abs(parada.lat) <= 90 && Math.abs(parada.lng) <= 180) {
-      estado.paradas.push(parada);
-      ok++;
-    } else {
-      falhas++;
-    }
+    if (parada && Math.abs(parada.lat) <= 90 && Math.abs(parada.lng) <= 180) paradas.push(parada);
+    else falhas.push(linha);
   }
+  return { paradas, falhas };
+}
+
+function mostrarFalhas(falhas) {
+  const lista = $("falhas");
+  lista.replaceChildren(
+    ...falhas.map((f) => {
+      const li = document.createElement("li");
+      li.textContent = f;
+      return li;
+    })
+  );
+  $("bloco-falhas").hidden = falhas.length === 0;
+}
+
+async function importarCSV(arquivo) {
+  const linhas = (await arquivo.text()).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const { paradas, falhas } = await importarLinhas(linhas);
+  estado.paradas.push(...paradas);
   estado.otimizada = false;
+  mostrarFalhas(falhas);
   await atualizar();
   ajustarZoom();
-  status(`${ok} ponto(s) importado(s)${falhas ? `, ${falhas} não encontrado(s)` : ""}.`, falhas > 0);
+  status(`${paradas.length} ponto(s) importado(s)${falhas.length ? `, ${falhas.length} não encontrado(s)` : ""}.`, falhas.length > 0);
+}
+
+// Recebe a lista colada, localiza todos os endereços e já devolve a melhor rota.
+async function organizarLista() {
+  const linhas = $("lista-enderecos").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!linhas.length) return status("Cole ao menos um endereço.", true);
+  const btn = $("btn-organizar");
+  btn.disabled = true;
+  try {
+    const { paradas, falhas } = await importarLinhas(linhas);
+    estado.paradas = $("substituir").checked ? paradas : [...estado.paradas, ...paradas];
+    estado.otimizada = false;
+    mostrarFalhas(falhas);
+    // Deixa na caixa só o que não foi encontrado, para o usuário corrigir e tentar de novo.
+    $("lista-enderecos").value = falhas.join("\n");
+    await atualizar();
+    ajustarZoom();
+    if (estado.paradas.length >= 2) await otimizar();
+    // Na nova tentativa, os endereços corrigidos devem se somar à rota já montada.
+    if (falhas.length) $("substituir").checked = false;
+    if (falhas.length) status(`${paradas.length} endereço(s) encontrado(s). ${falhas.length} não encontrado(s): corrija-os e clique de novo para adicionar.`, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ---------- Renderização ----------
@@ -377,6 +456,7 @@ $("btn-gmaps").onclick = () => {
   links.forEach((url) => window.open(url, "_blank", "noopener"));
 };
 $("btn-exportar").onclick = exportarCSV;
+$("btn-organizar").onclick = organizarLista;
 $("arquivo-csv").onchange = (e) => {
   const arquivo = e.target.files[0];
   if (arquivo) importarCSV(arquivo).finally(() => (e.target.value = ""));

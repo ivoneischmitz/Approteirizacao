@@ -54,6 +54,24 @@ h2 { margin: 0; font-size: 1rem; }
 .dica { color: var(--texto-suave); font-size: 0.85rem; margin: 8px 0 0; }
 
 label { font-size: 0.9rem; }
+
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+label.check { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+button.largo { width: 100%; padding: 10px; font-weight: 600; }
+.dica.erro { color: var(--perigo); }
+#falhas { margin: 4px 0 0; padding-left: 20px; font-size: 0.85rem; color: var(--perigo); }
 .linha { display: flex; gap: 8px; margin-top: 6px; }
 
 input[type="text"], select {

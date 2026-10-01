@@ -15,8 +15,19 @@
     </header>
 
     <section>
+      <label for="lista-enderecos">Colar lista de endereços</label>
+      <textarea id="lista-enderecos" rows="7" placeholder="Um endereço por linha. A primeira linha é o ponto de partida.&#10;&#10;Ex.:&#10;Av. Paulista, 1000, São Paulo&#10;Rua Augusta, 500, São Paulo&#10;Rua Oscar Freire, 300, São Paulo"></textarea>
+      <label class="check"><input id="substituir" type="checkbox" checked /> Substituir as paradas atuais</label>
+      <button id="btn-organizar" class="primario largo" type="button">Organizar melhor rota</button>
+      <div id="bloco-falhas" hidden>
+        <p class="dica erro">Endereços não encontrados (inclua número, bairro e cidade e tente de novo):</p>
+        <ul id="falhas"></ul>
+      </div>
+    </section>
+
+    <section>
       <form id="form-busca" autocomplete="off">
-        <label for="busca">Adicionar endereço</label>
+        <label for="busca">Adicionar um endereço</label>
         <div class="linha">
           <input id="busca" type="text" placeholder="Rua, número, cidade…" required />
           <button type="submit">Buscar</button>

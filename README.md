@@ -2,6 +2,15 @@
 
 Aplicativo web para planejar e otimizar rotas de entrega. Roda direto no navegador, sem build e sem backend.
 
+## Uso rápido: lista de endereços → melhor rota
+
+1. Cole os endereços na caixa **"Colar lista de endereços"**, um por linha. A **primeira linha é o ponto de partida**.
+2. Clique em **"Organizar melhor rota"**.
+3. O app localiza cada endereço (cerca de 1 por segundo), monta a matriz de tempos e devolve as paradas na melhor ordem, já desenhadas no mapa.
+4. Endereços não encontrados ficam listados em vermelho e permanecem na caixa: corrija-os (inclua número, bairro e cidade) e clique de novo. Eles serão somados à rota e tudo é reotimizado.
+
+Endereços já buscados ficam em cache no navegador, então repetir a mesma lista é instantâneo. A busca prioriza resultados no Brasil.
+
 ## Funcionalidades
 
 - **Adicionar paradas** buscando o endereço (OpenStreetMap/Nominatim) ou clicando no mapa. O primeiro ponto é a origem (depósito).
