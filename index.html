@@ -58,7 +58,7 @@
 
     <section class="acoes">
       <button id="btn-otimizar" class="primario" type="button">Otimizar rota</button>
-      <button id="btn-gmaps" type="button" disabled>Abrir no Google Maps</button>
+      <button id="btn-iniciar" class="iniciar" type="button" disabled>▶ Iniciar trajeto</button>
       <button id="btn-exportar" type="button" disabled>Exportar CSV</button>
       <label class="botao">Importar CSV<input id="arquivo-csv" type="file" accept=".csv,.txt" hidden /></label>
     </section>
@@ -70,6 +70,33 @@
         <dt>Tempo estimado</dt><dd id="res-tempo">–</dd>
       </dl>
       <p id="res-economia" class="dica"></p>
+    </section>
+
+    <section id="navegacao" hidden>
+      <div class="titulo-lista">
+        <h2>Trajeto em andamento</h2>
+        <button id="btn-encerrar" class="link" type="button">Encerrar</button>
+      </div>
+      <div class="progresso"><div id="barra"></div></div>
+      <p id="nav-progresso" class="dica"></p>
+
+      <div id="nav-proxima">
+        <span class="rotulo">Próxima parada</span>
+        <strong id="nav-nome"></strong>
+        <div class="apps">
+          <a id="link-gmaps" class="botao app gmaps" target="_blank" rel="noopener">Google Maps</a>
+          <a id="link-waze" class="botao app waze" target="_blank" rel="noopener">Waze</a>
+        </div>
+        <p class="dica">O Google Maps recebe esta e as próximas paradas; o Waze, só esta. Ao chegar, volte aqui e toque em "Cheguei".</p>
+        <button id="btn-entregue" class="primario largo" type="button">✓ Cheguei — próxima parada</button>
+      </div>
+
+      <div id="nav-fim" hidden>
+        <p class="concluido">🎉 Trajeto concluído!</p>
+      </div>
+
+      <button id="btn-voltar-parada" class="link" type="button">← Voltar para a parada anterior</button>
+      <ol id="nav-lista"></ol>
     </section>
 
     <p id="status" role="status"></p>

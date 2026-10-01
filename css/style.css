@@ -145,6 +145,44 @@ button.link { border: none; background: none; color: var(--primaria); padding: 0
 .acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .acoes .primario { grid-column: 1 / -1; padding: 10px; font-weight: 600; }
 
+button.iniciar {
+  grid-column: 1 / -1;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+/* Modo trajeto: só o painel de navegação fica visível. */
+body.navegando #painel > section:not(#navegacao) { display: none; }
+#navegacao { display: flex; flex-direction: column; gap: 10px; }
+#navegacao[hidden] { display: none; }
+.progresso { height: 8px; border-radius: 4px; background: var(--bg-alt); overflow: hidden; }
+#barra { height: 100%; width: 0; background: #2e7d32; transition: width 0.3s; }
+#nav-progresso { margin: 0; }
+#nav-proxima { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--borda); border-radius: 8px; }
+#nav-proxima[hidden] { display: none; }
+#nav-proxima .rotulo { font-size: 0.8rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.04em; }
+#nav-nome { font-size: 1.05rem; overflow-wrap: anywhere; }
+#nav-proxima .dica { margin: 0; }
+.apps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+a.botao.app { display: block; padding: 12px; font-weight: 700; text-decoration: none; color: #fff; border: none; }
+a.app.gmaps { background: #1a73e8; }
+a.app.waze { background: #05c8f7; color: #0b2b3a; }
+.concluido { font-size: 1.1rem; font-weight: 700; margin: 0; }
+#btn-voltar-parada { align-self: flex-start; }
+#btn-voltar-parada[hidden] { display: none; }
+#nav-lista { list-style: none; margin: 0; padding: 0; }
+#nav-lista li { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--borda); font-size: 0.85rem; cursor: pointer; }
+#nav-lista .num { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-alt); font-size: 0.75rem; font-weight: 600; }
+#nav-lista li.feita { color: var(--texto-suave); text-decoration: line-through; }
+#nav-lista li.feita .num { background: #9e9e9e; color: #fff; }
+#nav-lista li.atual { font-weight: 700; }
+#nav-lista li.atual .num { background: #f57c00; color: #fff; }
+#nav-lista .nome { flex: 1; overflow-wrap: anywhere; }
+
 #resumo dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0 0; }
 #resumo dt { color: var(--texto-suave); }
 #resumo dd { margin: 0; font-weight: 600; }
@@ -165,6 +203,8 @@ button.link { border: none; background: none; color: var(--primaria); padding: 0
   font: 600 12px system-ui, sans-serif;
 }
 .marcador.origem { background: #2e7d32; }
+.marcador.feita { background: #9e9e9e; }
+.marcador.proxima { background: #f57c00; width: 36px; height: 36px; margin: -4px; font-size: 14px; }
 
 @media (max-width: 760px) {
   body { flex-direction: column-reverse; }

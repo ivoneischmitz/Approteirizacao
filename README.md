@@ -11,6 +11,19 @@ Aplicativo web para planejar e otimizar rotas de entrega. Roda direto no navegad
 
 Endereços já buscados ficam em cache no navegador, então repetir a mesma lista é instantâneo. A busca prioriza resultados no Brasil.
 
+## Iniciar trajeto (Google Maps ou Waze)
+
+Com a rota pronta, toque em **"▶ Iniciar trajeto"**. O painel passa a mostrar só a navegação:
+
+1. A **próxima parada** aparece em destaque (laranja no mapa).
+2. Toque em **Google Maps** ou **Waze** para abrir o aplicativo já navegando a partir da sua localização.
+   - O **Google Maps** recebe a próxima parada e as seguintes (até 10 por vez).
+   - O **Waze** aceita só um destino por link, então recebe apenas a próxima parada.
+3. Ao chegar, volte ao app e toque em **"✓ Cheguei — próxima parada"**. As paradas feitas ficam riscadas e cinza.
+4. Dá para voltar uma parada ou tocar em qualquer parada da lista para pular para ela. **Encerrar** sai do modo trajeto.
+
+O progresso fica salvo no navegador: ao voltar do Waze ou do Google Maps (ou recarregar a página), o trajeto continua de onde parou. Se a rota for alterada, o trajeto é encerrado.
+
 ## Funcionalidades
 
 - **Adicionar paradas** buscando o endereço (OpenStreetMap/Nominatim) ou clicando no mapa. O primeiro ponto é a origem (depósito).
@@ -20,7 +33,7 @@ Endereços já buscados ficam em cache no navegador, então repetir a mesma list
   - Mostra a economia em relação à ordem original.
 - **Traçado no mapa** seguindo as ruas, com distância total e tempo estimado.
 - **Ajuste manual** da ordem (↑ ↓) e remoção de paradas.
-- **Abrir no Google Maps** para navegação (rotas longas são divididas em trechos de até 10 paradas, limite do Google Maps).
+- **Iniciar trajeto** com navegação parada a parada pelo Google Maps ou Waze (veja acima).
 - **Importar/Exportar CSV**. Na importação, cada linha pode ser:
   - `nome;latitude;longitude`
   - `latitude,longitude`
@@ -46,7 +59,7 @@ Depois abra http://localhost:8080. Também pode ser publicado no GitHub Pages se
 npm test
 ```
 
-Os testes cobrem o otimizador (`js/optimizer.js`): distância haversine, custo de rota, heurísticas e geração dos links do Google Maps.
+Os testes cobrem o otimizador (`js/optimizer.js`: distância haversine, custo de rota e heurísticas) e a geração dos links do Google Maps e do Waze (`js/navegacao.js`).
 
 ## Estrutura
 
@@ -55,6 +68,7 @@ index.html          interface
 css/style.css       estilos (com tema escuro e layout para celular)
 js/app.js           mapa, busca, integração com OSRM/Nominatim, importação/exportação
 js/optimizer.js     algoritmos de otimização (sem dependências)
+js/navegacao.js     links de navegação para Google Maps e Waze
 tests/              testes com node:test
 ```
 

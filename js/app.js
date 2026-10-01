@@ -1,10 +1,12 @@
-import { haversineMatrix, optimizeRoute, routeCost, googleMapsLinks } from "./optimizer.js";
+import { haversineMatrix, optimizeRoute, routeCost } from "./optimizer.js";
+import { linkWaze, linkGoogleMaps } from "./navegacao.js";
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_REVERSE = "https://nominatim.openstreetmap.org/reverse";
 const OSRM = "https://router.project-osrm.org";
 const VELOCIDADE_MEDIA_KMH = 40; // usada quando o OSRM não está disponível
 const STORAGE_KEY = "roteirizacao:paradas";
+const TRAJETO_KEY = "roteirizacao:trajeto";
 const CACHE_KEY = "roteirizacao:geocache";
 const PAIS = "br"; // prioriza resultados no Brasil
 
@@ -13,6 +15,7 @@ const $ = (id) => document.getElementById(id);
 const estado = {
   paradas: carregar(), // [{ nome, lat, lng }] — índice 0 é a origem
   otimizada: false,
+  trajeto: null, // { atual } enquanto a navegação está em andamento
 };
 
 const mapa = L.map("mapa").setView([-15.78, -47.93], 4);
@@ -302,6 +305,109 @@ async function organizarLista() {
   }
 }
 
+// ---------- Trajeto (navegação parada a parada) ----------
+
+// Destinos na ordem de visita; a origem é o ponto de saída, então não entra.
+function destinos() {
+  const pts = rotaFechada();
+  return pts.slice(1).map((p, i) => ({ ...p, retorno: $("ida-volta").checked && i === pts.length - 2 }));
+}
+
+// Identifica a rota, para não retomar o progresso de um trajeto diferente.
+const assinatura = () => JSON.stringify(destinos().map((p) => [p.lat, p.lng]));
+
+function salvarTrajeto() {
+  try {
+    if (estado.trajeto) localStorage.setItem(TRAJETO_KEY, JSON.stringify({ ...estado.trajeto, rota: assinatura() }));
+    else localStorage.removeItem(TRAJETO_KEY);
+  } catch {
+    /* sem armazenamento: o progresso vale só nesta sessão */
+  }
+}
+
+function restaurarTrajeto() {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(TRAJETO_KEY));
+    if (salvo && salvo.rota === assinatura()) estado.trajeto = { atual: salvo.atual };
+  } catch {
+    estado.trajeto = null;
+  }
+}
+
+function iniciarTrajeto() {
+  if (estado.paradas.length < 2) return;
+  estado.trajeto = { atual: 0 };
+  salvarTrajeto();
+  renderTrajeto();
+  $("painel").scrollTop = 0;
+  renderMarcadores();
+  focarProxima();
+}
+
+function encerrarTrajeto() {
+  estado.trajeto = null;
+  salvarTrajeto();
+  renderTrajeto();
+  renderMarcadores();
+  ajustarZoom();
+}
+
+function irPara(indice) {
+  estado.trajeto.atual = Math.max(0, Math.min(indice, destinos().length));
+  salvarTrajeto();
+  renderTrajeto();
+  renderMarcadores();
+  focarProxima();
+}
+
+function focarProxima() {
+  const proxima = destinos()[estado.trajeto?.atual];
+  if (proxima) mapa.setView([proxima.lat, proxima.lng], Math.max(mapa.getZoom(), 14));
+}
+
+function renderTrajeto() {
+  const ativo = Boolean(estado.trajeto);
+  document.body.classList.toggle("navegando", ativo);
+  $("navegacao").hidden = !ativo;
+  if (!ativo) return;
+
+  const lista = destinos();
+  const atual = estado.trajeto.atual;
+  const proxima = lista[atual];
+  const concluido = !proxima;
+
+  $("barra").style.width = `${(Math.min(atual, lista.length) / lista.length) * 100}%`;
+  $("nav-progresso").textContent = concluido
+    ? `${lista.length} de ${lista.length} concluídas`
+    : `Parada ${atual + 1} de ${lista.length}`;
+  $("nav-proxima").hidden = concluido;
+  $("nav-fim").hidden = !concluido;
+  if (proxima) {
+    $("nav-nome").textContent = proxima.retorno ? `Retorno à origem — ${proxima.nome}` : proxima.nome;
+    $("link-gmaps").href = linkGoogleMaps(lista.slice(atual));
+    $("link-waze").href = linkWaze(proxima);
+    $("btn-entregue").textContent = atual === lista.length - 1 ? "✓ Cheguei — finalizar trajeto" : "✓ Cheguei — próxima parada";
+  }
+  $("btn-voltar-parada").hidden = atual === 0;
+
+  const ol = $("nav-lista");
+  ol.replaceChildren();
+  lista.forEach((p, i) => {
+    const li = document.createElement("li");
+    li.className = i < atual ? "feita" : i === atual ? "atual" : "";
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = i < atual ? "✓" : p.retorno ? "O" : i + 1;
+    const nome = document.createElement("span");
+    nome.className = "nome";
+    nome.textContent = p.retorno ? `Retorno: ${p.nome}` : p.nome;
+    li.append(num, nome);
+    li.title = "Tocar para definir como próxima parada";
+    li.onclick = () => irPara(i);
+    ol.append(li);
+  });
+}
+
 // ---------- Renderização ----------
 
 function ajustarZoom() {
@@ -310,10 +416,10 @@ function ajustarZoom() {
   }
 }
 
-function icone(rotulo, origem) {
+function icone(rotulo, classe) {
   return L.divIcon({
     className: "",
-    html: `<div class="marcador${origem ? " origem" : ""}">${rotulo}</div>`,
+    html: `<div class="marcador ${classe}">${rotulo}</div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   });
@@ -350,7 +456,13 @@ function renderMarcadores() {
     const titulo = document.createElement("strong");
     titulo.textContent = i === 0 ? "Origem" : `Parada ${i}`;
     conteudo.append(titulo, document.createElement("br"), p.nome);
-    L.marker([p.lat, p.lng], { icon: icone(i === 0 ? "O" : i, i === 0) })
+    // Durante o trajeto: paradas feitas ficam cinza e a próxima, em destaque.
+    let classe = i === 0 ? "origem" : "";
+    if (estado.trajeto && i > 0) {
+      if (i - 1 < estado.trajeto.atual) classe = "feita";
+      else if (i - 1 === estado.trajeto.atual) classe = "proxima";
+    }
+    L.marker([p.lat, p.lng], { icon: icone(i === 0 ? "O" : i, classe), zIndexOffset: classe === "proxima" ? 1000 : 0 })
       .bindPopup(conteudo)
       .addTo(camadaMarcadores);
   });
@@ -372,7 +484,7 @@ async function renderRota() {
   }
   const pts = rotaFechada();
   const temRota = estado.paradas.length >= 2;
-  $("btn-gmaps").disabled = !temRota;
+  $("btn-iniciar").disabled = !temRota;
   $("btn-exportar").disabled = estado.paradas.length === 0;
   $("resumo").hidden = !temRota;
   if (!temRota) return;
@@ -395,6 +507,8 @@ async function renderRota() {
 
 async function atualizar() {
   salvar();
+  // Rota alterada: o progresso de um trajeto anterior deixa de valer.
+  if (estado.trajeto) encerrarTrajeto();
   renderLista();
   renderMarcadores();
   await renderRota();
@@ -450,11 +564,12 @@ $("ida-volta").onchange = () => {
   estado.otimizada = false;
   renderRota();
 };
-$("btn-gmaps").onclick = () => {
-  const links = googleMapsLinks(rotaFechada());
-  if (links.length > 1) status(`A rota foi dividida em ${links.length} trechos (limite do Google Maps).`);
-  links.forEach((url) => window.open(url, "_blank", "noopener"));
+$("btn-iniciar").onclick = iniciarTrajeto;
+$("btn-encerrar").onclick = () => {
+  if (estado.trajeto.atual >= destinos().length || confirm("Encerrar o trajeto em andamento?")) encerrarTrajeto();
 };
+$("btn-entregue").onclick = () => irPara(estado.trajeto.atual + 1);
+$("btn-voltar-parada").onclick = () => irPara(estado.trajeto.atual - 1);
 $("btn-exportar").onclick = exportarCSV;
 $("btn-organizar").onclick = organizarLista;
 $("arquivo-csv").onchange = (e) => {
@@ -462,4 +577,14 @@ $("arquivo-csv").onchange = (e) => {
   if (arquivo) importarCSV(arquivo).finally(() => (e.target.value = ""));
 };
 
-atualizar().then(ajustarZoom);
+atualizar().then(() => {
+  // Retoma um trajeto em andamento (ex.: depois de voltar do Waze ou do Google Maps).
+  restaurarTrajeto();
+  if (estado.trajeto) {
+    renderTrajeto();
+    renderMarcadores();
+    focarProxima();
+  } else {
+    ajustarZoom();
+  }
+});

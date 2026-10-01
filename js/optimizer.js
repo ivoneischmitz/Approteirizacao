@@ -104,23 +104,3 @@ export function optimizeRoute(matrix, { roundTrip = true } = {}) {
   }
   return route;
 }
-
-// Divide a rota em trechos aceitos pelo Google Maps (origem + até 9 paradas intermediárias + destino).
-export function googleMapsLinks(points, maxWaypoints = 9) {
-  const fmt = (p) => `${p.lat.toFixed(6)},${p.lng.toFixed(6)}`;
-  const links = [];
-  const chunk = maxWaypoints + 1;
-  for (let start = 0; start < points.length - 1; start += chunk) {
-    const end = Math.min(start + chunk, points.length - 1);
-    const params = new URLSearchParams({
-      api: "1",
-      origin: fmt(points[start]),
-      destination: fmt(points[end]),
-      travelmode: "driving",
-    });
-    const waypoints = points.slice(start + 1, end).map(fmt).join("|");
-    if (waypoints) params.set("waypoints", waypoints);
-    links.push(`https://www.google.com/maps/dir/?${params.toString()}`);
-  }
-  return links;
-}

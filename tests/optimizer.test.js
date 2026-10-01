@@ -6,7 +6,6 @@ import {
   routeCost,
   nearestNeighbor,
   optimizeRoute,
-  googleMapsLinks,
 } from "../js/optimizer.js";
 
 test("haversine: São Paulo → Rio de Janeiro ≈ 360 km", () => {
@@ -65,17 +64,4 @@ test("optimizeRoute lida com matriz assimétrica", () => {
     [1, 10, 0],
   ];
   assert.deepEqual(optimizeRoute(m, { roundTrip: true }), [0, 1, 2]);
-});
-
-test("googleMapsLinks divide rotas longas em trechos encadeados", () => {
-  const pts = Array.from({ length: 25 }, (_, i) => ({ lat: i, lng: i }));
-  const links = googleMapsLinks(pts);
-  assert.equal(links.length, 3);
-  const first = new URL(links[0]).searchParams;
-  assert.equal(first.get("origin"), "0.000000,0.000000");
-  assert.equal(first.get("destination"), "10.000000,10.000000");
-  assert.equal(first.get("waypoints").split("|").length, 9);
-  const last = new URL(links[2]).searchParams;
-  assert.equal(last.get("origin"), "20.000000,20.000000");
-  assert.equal(last.get("destination"), "24.000000,24.000000");
 });
