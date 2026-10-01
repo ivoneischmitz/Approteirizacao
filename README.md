@@ -16,7 +16,7 @@ Endereços já buscados ficam em cache no navegador, então repetir a mesma list
 Com a rota pronta, toque em **"▶ Iniciar trajeto"**. O painel passa a mostrar só a navegação:
 
 1. A **próxima parada** aparece em destaque (laranja no mapa).
-2. Toque em **Google Maps** ou **Waze** para abrir o aplicativo já navegando a partir da sua localização.
+2. Toque em **Google Maps** ou **Waze** (ou use direto os botões **"Abrir no Google Maps"** / **"Abrir no Waze"** do painel principal, que já iniciam o trajeto) para abrir o aplicativo já navegando a partir da sua localização.
    - O **Google Maps** recebe a próxima parada e as seguintes (até 10 por vez).
    - O **Waze** aceita só um destino por link, então recebe apenas a próxima parada.
 3. Ao chegar, volte ao app e toque em **"✓ Cheguei — próxima parada"**. As paradas feitas ficam riscadas e cinza.

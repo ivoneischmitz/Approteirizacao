@@ -168,6 +168,10 @@ body.navegando #painel > section:not(#navegacao) { display: none; }
 #nav-nome { font-size: 1.05rem; overflow-wrap: anywhere; }
 #nav-proxima .dica { margin: 0; }
 .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acoes button.app { font-weight: 700; border: none; color: #fff; }
+.acoes button.app:disabled { opacity: 0.45; }
+button.app.gmaps { background: #1a73e8; }
+button.app.waze { background: #05c8f7; color: #0b2b3a; }
 a.botao.app { display: block; padding: 12px; font-weight: 700; text-decoration: none; color: #fff; border: none; }
 a.app.gmaps { background: #1a73e8; }
 a.app.waze { background: #05c8f7; color: #0b2b3a; }

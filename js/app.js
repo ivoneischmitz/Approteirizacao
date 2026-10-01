@@ -1,5 +1,5 @@
-import { haversineMatrix, optimizeRoute, routeCost } from "./optimizer.js";
-import { linkWaze, linkGoogleMaps } from "./navegacao.js";
+import { haversineMatrix, optimizeRoute, routeCost } from "./optimizer.js?v=4";
+import { linkWaze, linkGoogleMaps } from "./navegacao.js?v=4";
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const NOMINATIM_REVERSE = "https://nominatim.openstreetmap.org/reverse";
@@ -484,7 +484,7 @@ async function renderRota() {
   }
   const pts = rotaFechada();
   const temRota = estado.paradas.length >= 2;
-  $("btn-iniciar").disabled = !temRota;
+  for (const id of ["btn-iniciar", "btn-abrir-gmaps", "btn-abrir-waze"]) $(id).disabled = !temRota;
   $("btn-exportar").disabled = estado.paradas.length === 0;
   $("resumo").hidden = !temRota;
   if (!temRota) return;
@@ -565,6 +565,15 @@ $("ida-volta").onchange = () => {
   renderRota();
 };
 $("btn-iniciar").onclick = iniciarTrajeto;
+// Atalhos: iniciam o trajeto e já abrem o aplicativo rumo à primeira parada.
+$("btn-abrir-gmaps").onclick = () => {
+  iniciarTrajeto();
+  window.open(linkGoogleMaps(destinos()), "_blank", "noopener");
+};
+$("btn-abrir-waze").onclick = () => {
+  iniciarTrajeto();
+  window.open(linkWaze(destinos()[0]), "_blank", "noopener");
+};
 $("btn-encerrar").onclick = () => {
   if (estado.trajeto.atual >= destinos().length || confirm("Encerrar o trajeto em andamento?")) encerrarTrajeto();
 };

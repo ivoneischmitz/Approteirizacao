@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Roteirização</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=4" />
 </head>
 <body>
   <aside id="painel">
@@ -59,6 +59,8 @@
     <section class="acoes">
       <button id="btn-otimizar" class="primario" type="button">Otimizar rota</button>
       <button id="btn-iniciar" class="iniciar" type="button" disabled>▶ Iniciar trajeto</button>
+      <button id="btn-abrir-gmaps" class="app gmaps" type="button" disabled>Abrir no Google Maps</button>
+      <button id="btn-abrir-waze" class="app waze" type="button" disabled>Abrir no Waze</button>
       <button id="btn-exportar" type="button" disabled>Exportar CSV</button>
       <label class="botao">Importar CSV<input id="arquivo-csv" type="file" accept=".csv,.txt" hidden /></label>
     </section>
@@ -105,6 +107,6 @@
   <main id="mapa"></main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>
